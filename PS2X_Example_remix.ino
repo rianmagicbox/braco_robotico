@@ -1,4 +1,5 @@
 #include <PS2X_lib.h>  //for v1.6
+#include <Servo.h>
 
 /******************************************************************
  * set pins connected to PS2 controller:
@@ -6,10 +7,11 @@
  *   - 2e colmun: Stef?
  * replace pin numbers by the ones you use
  ******************************************************************/
-#define PS2_CLK        13  //17 // AZUL
-#define PS2_DAT        12  //14 // MARROM  
-#define PS2_CMD        11  //15 // LARANJA
-#define PS2_SEL        10  //16 // AMARELO
+#define PS2_CLK        13  // AZUL
+#define PS2_DAT        12  // MARROM  
+#define PS2_CMD        11  // LARANJA
+#define PS2_SEL        10  // AMARELO
+#define servo_base     9
 
 /******************************************************************
  * select modes of PS2 controller:
@@ -22,12 +24,18 @@
 //#define rumble      true
 #define rumble      false
 
-PS2X ps2x; // create PS2 Controller Class
+PS2X ps2x;
+Servo myservo;
 
 //right now, the library does NOT support hot pluggable controllers, meaning 
 //you must always either restart your Arduino after you connect the controller, 
 //or call config_gamepad(pins) again after connecting the controller.
 
+int posicao_base = 90; // min: 0 max: 180
+int posicao_direita = 90; // min: 0 max: 130
+int posicao_esquerda = 90; // min: 0 max: 148
+int posicao_garra = 0; // min: 0 max: 50 
+int val;
 int error = 0;
 byte type = 0;
 byte vibrate = 0;
@@ -39,6 +47,8 @@ void setup(){
   delay(300);  //added delay to give wireless ps2 module some time to startup, before configuring it
    
   //CHANGES for v1.6 HERE!!! **************PAY ATTENTION*************
+
+  myservo.attach(servo_base);
   
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
   error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
@@ -88,15 +98,19 @@ void setup(){
 }
 
 void loop() {
-  /* You must Read Gamepad to get new values and set vibration values
-     ps2x.read_gamepad(small motor on/off, larger motor strenght from 0-255)
-     if you don't enable the rumble, use ps2x.read_gamepad(); with no values
-     You should call this at least once a second
-   */  
   if(error == 1) //skip loop if no controller found
     return; 
-  
-  
+
+
+  val = ps2x.Analog(PSS_LX);
+  if (val > 123) { 
+    posicao_base = posicao_base - 1;
+  }
+  if (val < 123) { 
+    posicao_base = posicao_base + 1;
+  }
+  myservo.write(posicao_base);
+  Serial.println(posicao_base);
   
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
     
