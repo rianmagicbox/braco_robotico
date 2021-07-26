@@ -12,6 +12,9 @@
 #define PS2_CMD        11  // LARANJA
 #define PS2_SEL        10  // AMARELO
 #define servo_base     9
+#define servo_direito  8
+#define servo_esquerdo 7
+#define servo_garra    6
 
 /******************************************************************
  * select modes of PS2 controller:
@@ -25,15 +28,18 @@
 #define rumble      false
 
 PS2X ps2x;
-Servo myservo;
+Servo base;
+Servo direito;
+Servo esquerdo;
+Servo garra;
 
 //right now, the library does NOT support hot pluggable controllers, meaning 
 //you must always either restart your Arduino after you connect the controller, 
 //or call config_gamepad(pins) again after connecting the controller.
 
 int posicao_base = 90; // min: 0 max: 180
-int posicao_direita = 90; // min: 0 max: 130
-int posicao_esquerda = 90; // min: 0 max: 148
+int posicao_direito = 90; // min: 0 max: 130
+int posicao_esquerdo = 90; // min: 0 max: 148
 int posicao_garra = 0; // min: 0 max: 50 
 int val;
 int error = 0;
@@ -48,7 +54,10 @@ void setup(){
    
   //CHANGES for v1.6 HERE!!! **************PAY ATTENTION*************
 
-  myservo.attach(servo_base);
+  base.attach(servo_base);
+  direito.attach(servo_direito);
+  esquerdo.attach(servo_esquerdo);
+  garra.attach(servo_garra);
   
   //setup pins and settings: GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
   error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
@@ -109,8 +118,55 @@ void loop() {
   if (val < 123) { 
     posicao_base = posicao_base + 1;
   }
-  myservo.write(posicao_base);
+  if (posicao_base < 0) {
+    posicao_base = 0;
+  }
+  if (posicao_base > 180) {
+    posicao_base = 180;
+  }
+  base.write(posicao_base);
   Serial.println(posicao_base);
+
+  val = ps2x.Analog(PSS_LY);
+  if (val > 123) { 
+    posicao_esquerdo = posicao_esquerdo - 1;
+  }
+  if (val < 123) { 
+    posicao_esquerdo = posicao_esquerdo + 1;
+  }
+  if (posicao_esquerdo < 0) {
+    posicao_esquerdo = 0;
+  }
+  if (posicao_esquerdo > 148) {
+    posicao_esquerdo = 148;
+  }
+  esquerdo.write(posicao_esquerdo);
+  Serial.println(posicao_esquerdo);
+
+  val = ps2x.Analog(PSS_RY);
+  if (val > 123) { 
+    posicao_direito = posicao_direito - 1;
+  }
+  if (val < 123) { 
+    posicao_direito = posicao_direito + 1;
+  }
+  if (posicao_direito < 0) {
+    posicao_direito = 0;
+  }
+  if (posicao_direito > 130) {
+    posicao_direito = 130;
+  }
+  direito.write(posicao_direito);
+  Serial.println(posicao_direito);
+
+  if(ps2x.Button(PSB_R2)) {
+    posicao_garra = 50;
+  } else {
+    posicao_garra = 0;
+  }
+  garra.write(posicao_garra);
+  Serial.println(posicao_garra);
+
   
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
     
